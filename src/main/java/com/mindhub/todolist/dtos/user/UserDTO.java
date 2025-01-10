@@ -1,6 +1,5 @@
 package com.mindhub.todolist.dtos.user;
 
-import com.mindhub.todolist.dtos.task.TaskDTO;
 import com.mindhub.todolist.dtos.task.TaskUserDTO;
 import com.mindhub.todolist.models.UserEntity;
 

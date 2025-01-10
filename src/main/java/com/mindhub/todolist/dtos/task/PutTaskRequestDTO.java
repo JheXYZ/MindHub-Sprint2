@@ -11,4 +11,5 @@ public record PutTaskRequestDTO(
         TaskStatus taskStatus,
         @NotNull(message = "user must be provided")
         UserTaskRequestDTO user
-) {}
+) {
+}

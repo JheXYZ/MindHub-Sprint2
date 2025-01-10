@@ -1,7 +1,5 @@
 package com.mindhub.todolist.dtos.task;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.mindhub.todolist.dtos.user.UserDTO;
 import com.mindhub.todolist.dtos.user.UserTaskDTO;
 import com.mindhub.todolist.models.Task;
 import com.mindhub.todolist.models.TaskStatus;

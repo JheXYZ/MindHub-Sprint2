@@ -2,7 +2,6 @@ package com.mindhub.todolist.models;
 
 import com.mindhub.todolist.dtos.user.NewUserRequestDTO;
 import com.mindhub.todolist.validations.NoWhitespaces;
-import com.mindhub.todolist.validations.UniqueEmail;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -88,7 +87,7 @@ public class UserEntity {
         this.tasks = tasks;
     }
 
-    public void addTask(Task task){
+    public void addTask(Task task) {
         task.setUser(this);
         this.tasks.add(task);
     }

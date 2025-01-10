@@ -1,10 +1,8 @@
 package com.mindhub.todolist.exceptions;
 
-import java.util.List;
+public class InvalidUserException extends Exception {
 
-public class InvalidUserException extends Exception{
-
-    public InvalidUserException(String message){
+    public InvalidUserException(String message) {
         super(message);
     }
 

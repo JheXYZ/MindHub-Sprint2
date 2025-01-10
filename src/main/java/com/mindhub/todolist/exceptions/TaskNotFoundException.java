@@ -2,11 +2,11 @@ package com.mindhub.todolist.exceptions;
 
 public class TaskNotFoundException extends Exception {
 
-    public TaskNotFoundException(String message){
+    public TaskNotFoundException(String message) {
         super(message);
     }
 
-    public TaskNotFoundException(){
+    public TaskNotFoundException() {
         super("task was not found");
     }
 }

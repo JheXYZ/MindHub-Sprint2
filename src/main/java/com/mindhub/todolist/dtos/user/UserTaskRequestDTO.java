@@ -13,4 +13,5 @@ public record UserTaskRequestDTO(
         @NotBlank(message = "password must not be empty")
         @NoWhitespaces(message = "password can not contain whitespaces")
         String password
-) {}
+) {
+}

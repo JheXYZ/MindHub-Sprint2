@@ -10,4 +10,5 @@ public record PatchTaskRequestDTO(
         TaskStatus taskStatus,
         @NotNull(message = "user must be provided")
         UserTaskRequestDTO user
-) {}
+) {
+}

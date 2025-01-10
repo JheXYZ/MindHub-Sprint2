@@ -4,11 +4,11 @@ import com.mindhub.todolist.dtos.task.NewTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.PatchTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.PutTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.TaskDTO;
-import com.mindhub.todolist.dtos.user.NewUserRequestDTO;
-import com.mindhub.todolist.dtos.user.PatchUserRequestDTO;
 import com.mindhub.todolist.dtos.user.UserTaskRequestDTO;
-import com.mindhub.todolist.exceptions.*;
-import com.mindhub.todolist.models.Task;
+import com.mindhub.todolist.exceptions.InvalidTaskException;
+import com.mindhub.todolist.exceptions.TaskNotFoundException;
+import com.mindhub.todolist.exceptions.UnauthorizedException;
+import com.mindhub.todolist.exceptions.UserNotFoundException;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;

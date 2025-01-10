@@ -7,7 +7,6 @@ import com.mindhub.todolist.dtos.user.UserDTO;
 import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
-import com.mindhub.todolist.models.Task;
 import com.mindhub.todolist.models.UserEntity;
 import com.mindhub.todolist.repositories.UserRepository;
 import com.mindhub.todolist.services.UserService;
@@ -16,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImp implements UserService {
@@ -92,7 +93,7 @@ public class UserServiceImp implements UserService {
 
     private void updatePasswordIfValid(UserEntity user, PatchUserRequestDTO userUpdates, List<String> errors) {
         List<String> currentErrors = new ArrayList<>();
-        if (userUpdates.password() != null){
+        if (userUpdates.password() != null) {
             if (!userUpdates.password().equals(user.getPassword())) {
                 if (userUpdates.password().length() < 6 || userUpdates.password().length() > 40)
                     currentErrors.add("password must be between 6 and 40 characters");
@@ -108,7 +109,7 @@ public class UserServiceImp implements UserService {
 
     private void updateEmailIfValid(UserEntity user, PatchUserRequestDTO userUpdates, List<String> errors) {
         List<String> currentErrors = new ArrayList<>();
-        if (userUpdates.email() != null && !userUpdates.email().equals(user.getEmail())){
+        if (userUpdates.email() != null && !userUpdates.email().equals(user.getEmail())) {
             if (userUpdates.email().isBlank())
                 currentErrors.add("email must not be empty");
             /*
@@ -150,7 +151,7 @@ public class UserServiceImp implements UserService {
         user.setPassword(user.getPassword());
     }
 
-    public Optional<UserEntity> findUserByEmail(String email){
+    public Optional<UserEntity> findUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 

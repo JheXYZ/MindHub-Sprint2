@@ -4,7 +4,6 @@ import com.mindhub.todolist.dtos.task.NewTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.PatchTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.PutTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.TaskDTO;
-import com.mindhub.todolist.dtos.user.PatchUserRequestDTO;
 import com.mindhub.todolist.dtos.user.UserTaskRequestDTO;
 import com.mindhub.todolist.exceptions.InvalidTaskException;
 import com.mindhub.todolist.exceptions.TaskNotFoundException;
@@ -56,7 +55,7 @@ public class TaskServiceImp implements TaskService {
                 newTaskRequestDTO.description(),
                 newTaskRequestDTO.taskStatus() != null ? newTaskRequestDTO.taskStatus() : TaskStatus.PENDING);
         user.addTask(task);
-        return new ResponseEntity<>(new TaskDTO(taskRepository.save(task)), HttpStatus.CREATED) ;
+        return new ResponseEntity<>(new TaskDTO(taskRepository.save(task)), HttpStatus.CREATED);
     }
 
     @Override
