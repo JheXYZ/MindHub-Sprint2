@@ -3,26 +3,26 @@ package com.mindhub.todolist.services;
 import com.mindhub.todolist.dtos.task.NewTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.PatchTaskRequestDTO;
 import com.mindhub.todolist.dtos.task.PutTaskRequestDTO;
-import com.mindhub.todolist.dtos.task.TaskDTO;
-import com.mindhub.todolist.dtos.user.UserTaskRequestDTO;
 import com.mindhub.todolist.exceptions.InvalidTaskException;
 import com.mindhub.todolist.exceptions.TaskNotFoundException;
 import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
-import org.springframework.http.ResponseEntity;
+import com.mindhub.todolist.models.Task;
 
 import java.util.List;
 
 public interface TaskService {
-    ResponseEntity<List<TaskDTO>> getAllTasksDTO();
 
-    ResponseEntity<TaskDTO> getTaskDTOById(Long id) throws TaskNotFoundException;
+    List<Task> getAllTasks();
 
-    ResponseEntity<TaskDTO> createTask(NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, UnauthorizedException, InvalidTaskException;
+    Task getTaskById(Long id) throws TaskNotFoundException;
 
-    ResponseEntity<?> deleteTask(Long id, UserTaskRequestDTO userTaskRequestDTO) throws UnauthorizedException;
+    Task createTask(String email, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, UnauthorizedException, InvalidTaskException;
 
-    ResponseEntity<TaskDTO> updatePutTask(Long id, PutTaskRequestDTO putTaskRequestDTO) throws UnauthorizedException, InvalidTaskException;
+    void deleteTask(Long id) throws UnauthorizedException, TaskNotFoundException;
 
-    ResponseEntity<TaskDTO> updatePatchTask(Long id, PatchTaskRequestDTO PatchTaskRequestDTO) throws UnauthorizedException, InvalidTaskException;
+    Task updatePutTask(Long id, PutTaskRequestDTO putTaskRequestDTO) throws UnauthorizedException, InvalidTaskException, TaskNotFoundException;
+
+    Task updatePatchTask(Long id, PatchTaskRequestDTO PatchTaskRequestDTO) throws UnauthorizedException, InvalidTaskException, TaskNotFoundException;
+
 }

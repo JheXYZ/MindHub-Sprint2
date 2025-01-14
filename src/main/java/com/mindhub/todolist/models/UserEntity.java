@@ -5,7 +5,6 @@ import com.mindhub.todolist.validations.NoWhitespaces;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import org.hibernate.validator.constraints.Length;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,7 +21,6 @@ public class UserEntity {
     private String username;
 
     @NotBlank(message = "password must not be empty")
-    @Length(min = 6, max = 40, message = "password must be between 6 and 40 characters")
     @Column(nullable = false)
     @NoWhitespaces(message = "password can not contain whitespaces")
     private String password;
@@ -36,13 +34,16 @@ public class UserEntity {
     @OneToMany(mappedBy = "user")
     private Set<Task> tasks = new HashSet<>();
 
+    UserAuthority authority = UserAuthority.USER;
+
     public UserEntity() {
     }
 
-    public UserEntity(String email, String password, String username) {
+    public UserEntity(String email, String password, String username, UserAuthority authority) {
         this.email = email;
         this.password = password;
         this.username = username;
+        this.authority = authority;
     }
 
     public UserEntity(NewUserRequestDTO newUserRequestDTO) {
@@ -81,6 +82,14 @@ public class UserEntity {
 
     public Set<Task> getTasks() {
         return tasks;
+    }
+
+    public UserAuthority getAuthority() {
+        return authority;
+    }
+
+    public void setAuthority(UserAuthority authority) {
+        this.authority = authority;
     }
 
     public void setTasks(Set<Task> tasks) {

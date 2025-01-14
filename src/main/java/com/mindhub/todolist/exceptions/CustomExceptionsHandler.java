@@ -1,6 +1,8 @@
 package com.mindhub.todolist.exceptions;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,8 @@ import java.util.List;
 
 @RestControllerAdvice
 public class CustomExceptionsHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(CustomExceptionsHandler.class);
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> userNotFoundExceptionHandler(UserNotFoundException userNotFoundException) {
@@ -65,9 +69,18 @@ public class CustomExceptionsHandler {
         if (ex.getCause() == null || !ex.getCause().getMessage().contains("not one of the values accepted for Enum"))
             return finalResponse("invalid JSON request", HttpStatus.BAD_REQUEST);
 
-        return finalResponse(
-                "invalid taskStatus. Accepted values: [COMPLETED, IN_PROGRESS, PENDING]",
-                HttpStatus.BAD_REQUEST);
+        /*log.error(ex.getMessage());*/
+        String validValues = ex.getMessage().substring(ex.getMessage().indexOf("["));
+        if (ex.getMessage().contains("UserAuthority"))
+            return finalResponse(
+                    "invalid authority. Accepted values: " + validValues,
+                    HttpStatus.BAD_REQUEST);
+        if (ex.getMessage().contains("TaskStatus"))
+            return finalResponse(
+                    "invalid taskStatus. Accepted values: " + validValues,
+                    HttpStatus.BAD_REQUEST);
+
+        return finalResponse("invalid value provided. Accepted values: " + validValues, HttpStatus.BAD_REQUEST);
     }
 
     public record ErrorResponse(List<String> errors) {}
@@ -75,11 +88,11 @@ public class CustomExceptionsHandler {
     private static List<String> parseToListFromString(String errorMessage) {
         List<String> errorsList = new ArrayList<>();
         if (errorMessage.startsWith("[") && errorMessage.endsWith("]")) {
-            //this regex splits the string when '[' , ']' and/or ',' are found.
+            // this regex splits the string when '[' , ']' and/or ',' are found.
             // E.g. String '[invalid email, invalid password]' -> List<String> ["", "invalid email", "invalid password"]
             errorsList.addAll(Arrays.stream(errorMessage.split("\\[|]|,\\s*")).toList());
 
-            //this eliminates first index because it always is "", resulting in only the messages.
+            // this eliminates first index because it always is "", resulting in only the messages.
             // E.g. List<String> ["invalid email", "invalid password"]
             errorsList.remove(0);
         }

@@ -1,10 +1,6 @@
 package com.mindhub.todolist.services.implementations;
 
-import com.mindhub.todolist.dtos.task.NewTaskRequestDTO;
-import com.mindhub.todolist.dtos.task.PatchTaskRequestDTO;
-import com.mindhub.todolist.dtos.task.PutTaskRequestDTO;
-import com.mindhub.todolist.dtos.task.TaskDTO;
-import com.mindhub.todolist.dtos.user.UserTaskRequestDTO;
+import com.mindhub.todolist.dtos.task.*;
 import com.mindhub.todolist.exceptions.InvalidTaskException;
 import com.mindhub.todolist.exceptions.TaskNotFoundException;
 import com.mindhub.todolist.exceptions.UnauthorizedException;
@@ -30,70 +26,132 @@ public class TaskServiceImp implements TaskService {
     @Autowired
     private UserService userService;
 
-    @Override
-    public ResponseEntity<List<TaskDTO>> getAllTasksDTO() {
-        return ResponseEntity.ok(taskRepository.findAll().stream().map(TaskDTO::new).toList());
+    public ResponseEntity<List<TaskDTO>> getAllTasksRequest() {
+        return ResponseEntity.ok(getAllTasks()
+                        .stream()
+                        .map(TaskDTO::new)
+                        .toList());
+    }
+
+    public ResponseEntity<List<TaskUserDTO>> getTasksRequest(String email) throws UserNotFoundException {
+        return ResponseEntity.ok(userService
+                .getUserByEmail(email)
+                .getTasks().stream()
+                .map(TaskUserDTO::new)
+                .toList());
     }
 
     @Override
-    public ResponseEntity<TaskDTO> getTaskDTOById(Long id) throws TaskNotFoundException {
-        return ResponseEntity.ok(
-                new TaskDTO(taskRepository
-                        .findById(id)
-                        .orElseThrow(TaskNotFoundException::new))
-        );
+    public List<Task> getAllTasks() {
+        return taskRepository.findAll();
+    }
+
+    public ResponseEntity<TaskDTO> getTaskByIdRequest(Long id) throws TaskNotFoundException {
+        return ResponseEntity.ok(new TaskDTO(getTaskById(id)));
+    }
+
+    public ResponseEntity<TaskUserDTO> getTaskFromUserByIdRequest(String name, Long id) throws UserNotFoundException, TaskNotFoundException {
+        Task task = getTaskById(id);
+        if (!task.getUser().getEmail().equals(name))
+            throw new TaskNotFoundException();
+        return ResponseEntity.ok(new TaskUserDTO(task));
     }
 
     @Override
-    public ResponseEntity<TaskDTO> createTask(NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, UnauthorizedException, InvalidTaskException {
-        UserEntity user = userService.findUserByEmail(newTaskRequestDTO.user().email())
+    public Task getTaskById(Long id) throws TaskNotFoundException {
+        return taskRepository
+                .findById(id)
+                .orElseThrow(TaskNotFoundException::new);
+    }
+
+    public ResponseEntity<TaskUserDTO> createTaskRequest(String email, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException, UnauthorizedException {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new TaskUserDTO(createTask(email, newTaskRequestDTO)));
+    }
+
+    public ResponseEntity<TaskDTO> createTaskByUserIdRequest(Long userId, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException, UnauthorizedException {
+        String email = userService.getUserById(userId).getEmail();
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new TaskDTO(createTask(email, newTaskRequestDTO)));
+    }
+
+    @Override
+    public Task createTask(String email, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException {
+        UserEntity user = userService.findUserByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("email or password are incorrect"));
 
-        validateRequest(user, newTaskRequestDTO);
-
-        Task task = new Task(newTaskRequestDTO.title(),
-                newTaskRequestDTO.description(),
-                newTaskRequestDTO.taskStatus() != null ? newTaskRequestDTO.taskStatus() : TaskStatus.PENDING);
-        user.addTask(task);
-        return new ResponseEntity<>(new TaskDTO(taskRepository.save(task)), HttpStatus.CREATED);
+        validateTitleAndDescription(newTaskRequestDTO.title(), newTaskRequestDTO.description());
+        return taskRepository.save(
+                new Task(
+                    newTaskRequestDTO.title(),
+                    newTaskRequestDTO.description(),
+                    newTaskRequestDTO.taskStatus() != null ? newTaskRequestDTO.taskStatus() : TaskStatus.PENDING,
+                    user));
     }
 
-    @Override
-    public ResponseEntity<?> deleteTask(Long id, UserTaskRequestDTO userTaskRequestDTO) throws UnauthorizedException {
-        UserEntity user = userService.findUserByEmail(userTaskRequestDTO.email())
-                .orElseThrow(() -> new UnauthorizedException("email or password are incorrect"));
+    public ResponseEntity<?> deleteTaskByIdRequest(Long id) throws TaskNotFoundException {
+        deleteTask(id);
+        return ResponseEntity.noContent().build();
+    }
 
-        validateRequest(user, userTaskRequestDTO);
-        Task task = getTaskInUser(user, id);
-
-        taskRepository.delete(task);
+    public ResponseEntity<?> deleteTaskFromUserRequest(String email, Long id) throws UserNotFoundException, TaskNotFoundException {
+        if (userService
+                .getUserByEmail(email)
+                .getTasks().stream()
+                .noneMatch(task -> task.getId().equals(id)))
+            throw new TaskNotFoundException();
+        deleteTask(id);
         return ResponseEntity.noContent().build();
     }
 
     @Override
-    public ResponseEntity<TaskDTO> updatePutTask(Long id, PutTaskRequestDTO putTaskRequestDTO) throws UnauthorizedException, InvalidTaskException {
-        UserTaskRequestDTO userRequest = putTaskRequestDTO.user();
-        UserEntity user = userService.findUserByEmail(userRequest.email())
-                .orElseThrow(() -> new UnauthorizedException("email or password are incorrect"));
+    public void deleteTask(Long id) throws TaskNotFoundException {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(TaskNotFoundException::new);
+        taskRepository.delete(task);
+    }
 
-        validateRequest(user, userRequest);
-        Task task = getTaskInUser(user, id);
-        makeUpdatesPutTask(task, putTaskRequestDTO);
+    public ResponseEntity<TaskDTO> updatePutTaskByIdRequest(Long id, PutTaskRequestDTO putTaskRequestDTO) throws InvalidTaskException, TaskNotFoundException {
+        return ResponseEntity.ok(new TaskDTO(updatePutTask(id, putTaskRequestDTO)));
+    }
 
-        return ResponseEntity.ok(new TaskDTO(taskRepository.save(task)));
+    public ResponseEntity<TaskUserDTO> updatePutTaskFromUserRequest(String email, Long id, PutTaskRequestDTO putTaskRequestDTO) throws TaskNotFoundException, InvalidTaskException {
+        if(userService.findUserByEmail(email).stream().noneMatch(task -> task.getId().equals(id)))
+            throw new TaskNotFoundException();
+        return ResponseEntity.ok(new TaskUserDTO(updatePutTask(id, putTaskRequestDTO)));
     }
 
     @Override
-    public ResponseEntity<TaskDTO> updatePatchTask(Long id, PatchTaskRequestDTO patchUserRequestDTO) throws UnauthorizedException, InvalidTaskException {
-        UserTaskRequestDTO userRequest = patchUserRequestDTO.user();
-        UserEntity user = userService.findUserByEmail(userRequest.email())
-                .orElseThrow(() -> new UnauthorizedException("email or password are incorrect"));
+    public Task updatePutTask(Long id, PutTaskRequestDTO putTaskRequestDTO) throws InvalidTaskException, TaskNotFoundException {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(TaskNotFoundException::new);
 
-        validateRequest(user, userRequest);
-        Task task = getTaskInUser(user, id);
+        makeUpdatesPutTask(task, putTaskRequestDTO);
+        return taskRepository.save(task);
+    }
+
+    public ResponseEntity<TaskDTO> updatePatchTaskByIdRequest(Long id, PatchTaskRequestDTO patchTaskRequestDTO) throws InvalidTaskException, TaskNotFoundException {
+        return ResponseEntity.ok(new TaskDTO(updatePatchTask(id, patchTaskRequestDTO)));
+    }
+
+    public ResponseEntity<TaskUserDTO> updatePatchTaskFromUserRequest(String email, Long id, PatchTaskRequestDTO patchTaskRequestDTO) throws UserNotFoundException, TaskNotFoundException, InvalidTaskException {
+        if (userService
+                .getUserByEmail(email)
+                .getTasks().stream()
+                .noneMatch(task -> task.getId().equals(id)))
+            throw new TaskNotFoundException();
+
+        return ResponseEntity.ok(new TaskUserDTO(updatePatchTask(id, patchTaskRequestDTO)));
+    }
+
+    @Override
+    public Task updatePatchTask(Long id, PatchTaskRequestDTO patchUserRequestDTO) throws InvalidTaskException, TaskNotFoundException {;
+        Task task = taskRepository.findById(id).orElseThrow(TaskNotFoundException::new);
+
         makeUpdatesPatchTask(task, patchUserRequestDTO);
-
-        return ResponseEntity.ok(new TaskDTO(taskRepository.save(task)));
+        return taskRepository.save(task);
     }
 
     private void makeUpdatesPatchTask(Task task, PatchTaskRequestDTO taskUpdate) throws InvalidTaskException {
@@ -116,39 +174,9 @@ public class TaskServiceImp implements TaskService {
         task.setTaskStatus(taskUpdate.taskStatus());
     }
 
-    private void validateRequest(UserEntity user, NewTaskRequestDTO newTaskRequestDTO) throws UnauthorizedException, InvalidTaskException {
-        UserTaskRequestDTO userRequest = newTaskRequestDTO.user();
-        validateCredentials(
-                user.getEmail(),
-                user.getPassword(),
-                userRequest.email(),
-                userRequest.password());
-        validateTitleAndDescription(newTaskRequestDTO.title(), newTaskRequestDTO.description());
-    }
-
-    private void validateRequest(UserEntity user, UserTaskRequestDTO userTaskRequestDTO) throws UnauthorizedException {
-        validateCredentials(
-                user.getEmail(),
-                user.getPassword(),
-                userTaskRequestDTO.email(),
-                userTaskRequestDTO.password());
-    }
-
-    private void validateCredentials(String validEmail, String validPassword, String email, String password) throws UnauthorizedException {
-        if (!validEmail.equals(email) || !validPassword.equals(password))
-            throw new UnauthorizedException("email or password are incorrect");
-    }
-
     private void validateTitleAndDescription(String title, String description) throws InvalidTaskException {
         if (title.isBlank() && description.isBlank())
             throw new InvalidTaskException("either title or description must have text");
     }
 
-    private Task getTaskInUser(UserEntity user, Long id) throws UnauthorizedException {
-        return user.getTasks()
-                .stream()
-                .filter(currTask -> currTask.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new UnauthorizedException("unauthorized user"));
-    }
 }

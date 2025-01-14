@@ -6,13 +6,19 @@ import com.mindhub.todolist.dtos.user.PutUserRequestDTO;
 import com.mindhub.todolist.dtos.user.UserDTO;
 import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
+import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
+import com.mindhub.todolist.models.UserAuthority;
 import com.mindhub.todolist.models.UserEntity;
 import com.mindhub.todolist.repositories.UserRepository;
 import com.mindhub.todolist.services.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -22,11 +28,14 @@ import java.util.Optional;
 @Service
 public class UserServiceImp implements UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImp.class);
     @Autowired
     private UserRepository userRepository;
 
-    @Override
-    public ResponseEntity<List<UserDTO>> getAllUsersDTO() {
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public ResponseEntity<List<UserDTO>> getAllUsersRequest() {
         return ResponseEntity.ok(getAllUsers().stream().map(UserDTO::new).toList());
     }
 
@@ -35,8 +44,7 @@ public class UserServiceImp implements UserService {
         return userRepository.findAll();
     }
 
-    @Override
-    public ResponseEntity<UserDTO> getUserDTOById(Long id) throws UserNotFoundException {
+    public ResponseEntity<UserDTO> getUserByIdRequest(Long id) throws UserNotFoundException {
         return ResponseEntity.ok(new UserDTO(getUserById(id)));
     }
 
@@ -47,38 +55,104 @@ public class UserServiceImp implements UserService {
                 .orElseThrow(() -> new UserNotFoundException("user was not found"));
     }
 
-    @Override
-    public ResponseEntity<UserDTO> createUser(NewUserRequestDTO newUserRequestDTO) {
-        return new ResponseEntity<>(new UserDTO(userRepository
-                .save(new UserEntity(newUserRequestDTO))), HttpStatus.CREATED);
+    public ResponseEntity<UserDTO> getUserByEmailRequest(String email) throws UserNotFoundException {
+        return ResponseEntity.ok(new UserDTO(getUserByEmail(email)));
     }
 
     @Override
-    public ResponseEntity<?> deleteUser(Long id) throws UserNotFoundException {
-        if (!userRepository.existsById(id))
-            throw new UserNotFoundException("user with id '" + id + "' was not found");
-        userRepository.deleteById(id);
+    public UserEntity getUserByEmail(String email) throws UserNotFoundException {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("user with email '" + email + " was not found"));
+    }
+
+    @Override
+    public UserEntity createUser(NewUserRequestDTO newUserRequestDTO) {
+        UserEntity user = new UserEntity(newUserRequestDTO);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
+    }
+
+    public ResponseEntity<UserDTO> createUserRequest(NewUserRequestDTO newUserRequestDTO){
+        return new ResponseEntity<>(new UserDTO(createUser(newUserRequestDTO)), HttpStatus.CREATED);
+    }
+
+    public ResponseEntity<?> deleteUserRequest(String email) throws UserNotFoundException, UnauthorizedException {
+        deleteUser(getUserByEmail(email).getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    public ResponseEntity<?> deleteUserRequest(Authentication authentication, Long id) throws UnauthorizedException, UserNotFoundException {
+        /*if (authentication
+                .getAuthorities()
+                .stream()
+                .noneMatch(authority -> authority.getAuthority().equals("ADMIN"))
+        )
+            throw new UnauthorizedException();*/
+
+        deleteUser(id);
+        log.info("Deleted user with id: {} by: {}", id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @Override
-    public ResponseEntity<UserDTO> updatePutUser(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException {
+    public void deleteUser(Long id) throws UserNotFoundException {
+        if (!userRepository.existsById(id))
+            throw new UserNotFoundException("user with id '" + id + "' was not found");
+        userRepository.deleteById(id);
+    }
+
+    public ResponseEntity<UserDTO> updatePutUserRequest(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
+        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO)));
+    }
+
+    public ResponseEntity<UserDTO> updatePutUserRequest(String email, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
+        Long id = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("user with email '" + email + "'was not found"))
+                .getId();
+        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO)));
+    }
+
+    @Override
+    public UserEntity updatePutUser(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("user with id '" + id + "' was not found"));
 
         makeUpdatesPutUser(user, putUserRequestDTO);
-        return ResponseEntity.ok(new UserDTO(userRepository.save(user)));
+        return userRepository.save(user);
+    }
+
+    public ResponseEntity<UserDTO> updatePatchUserRequest(Long id, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
+        return ResponseEntity.ok(new UserDTO(updatePatchUser(id, patchUserRequestDTO)));
+    }
+
+    public ResponseEntity<UserDTO> updatePatchUserRequest(String email, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
+        Long id = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("user with email '" + email + "'was not found"))
+                .getId();
+        return ResponseEntity.ok(new UserDTO(updatePatchUser(id, patchUserRequestDTO)));
     }
 
     @Override
-    public ResponseEntity<UserDTO> updatePatchUser(Long id, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
-        UserEntity user = userRepository.findById(id)
+    public UserEntity updatePatchUser(Long id, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
+        UserEntity user = userRepository
+                .findById(id)
                 .orElseThrow(() -> new UserNotFoundException("user with id '" + id + "' was not found"));
-
         makeUpdatesPatchUser(user, patchUserRequestDTO);
-        return ResponseEntity.ok(new UserDTO(userRepository.save(user)));
+        return userRepository.save(user);
     }
 
+
+    private void makeUpdatesPutUser(UserEntity user, PutUserRequestDTO userUpdates) throws EmailAlreadyExistsException, InvalidUserException {
+        user.setUsername(userUpdates.username());
+        if (!userUpdates.email().equals(user.getEmail()) && userRepository.existsByEmail(userUpdates.email()))
+            throw new EmailAlreadyExistsException("email '" + userUpdates.email() + "' is already taken");
+        user.setEmail(userUpdates.email());
+        if (passwordEncoder.matches(userUpdates.password(), user.getPassword()))
+            throw new InvalidUserException("password can not be the same as the old one");
+        user.setPassword(passwordEncoder.encode(userUpdates.password()));
+    }
 
     private void makeUpdatesPatchUser(UserEntity user, PatchUserRequestDTO userUpdates) throws InvalidUserException {
         List<String> errors = new ArrayList<>();
@@ -86,6 +160,7 @@ public class UserServiceImp implements UserService {
         updateUsernameIfValid(user, userUpdates, errors);
         updateEmailIfValid(user, userUpdates, errors);
         updatePasswordIfValid(user, userUpdates, errors);
+        updateAuthorityIfValid(user, userUpdates, errors);
 
         if (!errors.isEmpty())
             throw new InvalidUserException(errors.toString());
@@ -94,15 +169,15 @@ public class UserServiceImp implements UserService {
     private void updatePasswordIfValid(UserEntity user, PatchUserRequestDTO userUpdates, List<String> errors) {
         List<String> currentErrors = new ArrayList<>();
         if (userUpdates.password() != null) {
-            if (!userUpdates.password().equals(user.getPassword())) {
+            if (!passwordEncoder.matches(userUpdates.password(), user.getPassword())) {
                 if (userUpdates.password().length() < 6 || userUpdates.password().length() > 40)
                     currentErrors.add("password must be between 6 and 40 characters");
                 if (userUpdates.password().isBlank())
                     currentErrors.add("password must not be empty");
                 if (currentErrors.isEmpty())
-                    user.setPassword(userUpdates.password());
+                    user.setPassword(passwordEncoder.encode(userUpdates.password()));
             } else
-                currentErrors.add("password can not be the same");
+                currentErrors.add("password can not be the same as the old one");
         }
         errors.addAll(currentErrors);
     }
@@ -143,12 +218,10 @@ public class UserServiceImp implements UserService {
         errors.addAll(currentErrors);
     }
 
-    private void makeUpdatesPutUser(UserEntity user, PutUserRequestDTO userUpdates) throws EmailAlreadyExistsException {
-        user.setUsername(userUpdates.username());
-        if (!userUpdates.email().equals(user.getEmail()) && userRepository.existsByEmail(userUpdates.email()))
-            throw new EmailAlreadyExistsException("email '" + userUpdates.email() + "' is already taken");
-        user.setEmail(userUpdates.email());
-        user.setPassword(user.getPassword());
+    private void updateAuthorityIfValid(UserEntity user, PatchUserRequestDTO userUpdates, List<String> errors) {
+        if (userUpdates.authority() != null && !user.getAuthority().equals(userUpdates.authority())){
+            user.setAuthority(userUpdates.authority());
+        }
     }
 
     public Optional<UserEntity> findUserByEmail(String email) {
