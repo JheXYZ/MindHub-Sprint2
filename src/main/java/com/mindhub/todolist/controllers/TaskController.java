@@ -5,7 +5,8 @@ import com.mindhub.todolist.exceptions.InvalidTaskException;
 import com.mindhub.todolist.exceptions.TaskNotFoundException;
 import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
-import com.mindhub.todolist.services.implementations.TaskServiceImp;
+import com.mindhub.todolist.services.TaskService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,12 +15,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/tasks")
 public class TaskController {
 
     @Autowired
-    private TaskServiceImp taskService;
+    private TaskService taskService;
 
     @GetMapping
     public ResponseEntity<List<TaskDTO>> getAllTasks() {
@@ -41,13 +43,13 @@ public class TaskController {
         return taskService.getTaskFromUserByIdRequest(authentication.getName(), id);
     }
 
-    @PostMapping("/{id}")
-    public ResponseEntity<TaskDTO> createTaskByUserId(@PathVariable Long userId, @Valid @RequestBody NewTaskRequestDTO taskRequestDTO) throws UserNotFoundException, InvalidTaskException, UnauthorizedException {
+    @PostMapping("/user/{userId}")
+    public ResponseEntity<TaskDTO> createTaskByUserId(@PathVariable Long userId, @Valid @RequestBody NewTaskRequestDTO taskRequestDTO) throws UserNotFoundException, InvalidTaskException {
         return taskService.createTaskByUserIdRequest(userId, taskRequestDTO);
     }
 
     @PostMapping("/user")
-    public ResponseEntity<TaskUserDTO> createTaskToUser(Authentication authentication, @Valid @RequestBody NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, UnauthorizedException, InvalidTaskException {
+    public ResponseEntity<TaskUserDTO> createTaskToUser(Authentication authentication, @Valid @RequestBody NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException {
         return taskService.createTaskRequest(authentication.getName(), newTaskRequestDTO);
     }
 

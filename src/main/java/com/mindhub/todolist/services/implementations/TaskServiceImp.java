@@ -26,6 +26,7 @@ public class TaskServiceImp implements TaskService {
     @Autowired
     private UserService userService;
 
+    @Override
     public ResponseEntity<List<TaskDTO>> getAllTasksRequest() {
         return ResponseEntity.ok(getAllTasks()
                         .stream()
@@ -33,6 +34,7 @@ public class TaskServiceImp implements TaskService {
                         .toList());
     }
 
+    @Override
     public ResponseEntity<List<TaskUserDTO>> getTasksRequest(String email) throws UserNotFoundException {
         return ResponseEntity.ok(userService
                 .getUserByEmail(email)
@@ -46,11 +48,13 @@ public class TaskServiceImp implements TaskService {
         return taskRepository.findAll();
     }
 
+    @Override
     public ResponseEntity<TaskDTO> getTaskByIdRequest(Long id) throws TaskNotFoundException {
         return ResponseEntity.ok(new TaskDTO(getTaskById(id)));
     }
 
-    public ResponseEntity<TaskUserDTO> getTaskFromUserByIdRequest(String name, Long id) throws UserNotFoundException, TaskNotFoundException {
+    @Override
+    public ResponseEntity<TaskUserDTO> getTaskFromUserByIdRequest(String name, Long id) throws TaskNotFoundException {
         Task task = getTaskById(id);
         if (!task.getUser().getEmail().equals(name))
             throw new TaskNotFoundException();
@@ -64,13 +68,13 @@ public class TaskServiceImp implements TaskService {
                 .orElseThrow(TaskNotFoundException::new);
     }
 
-    public ResponseEntity<TaskUserDTO> createTaskRequest(String email, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException, UnauthorizedException {
+    public ResponseEntity<TaskUserDTO> createTaskRequest(String email, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new TaskUserDTO(createTask(email, newTaskRequestDTO)));
     }
 
-    public ResponseEntity<TaskDTO> createTaskByUserIdRequest(Long userId, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException, UnauthorizedException {
+    public ResponseEntity<TaskDTO> createTaskByUserIdRequest(Long userId, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException {
         String email = userService.getUserById(userId).getEmail();
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -82,6 +86,8 @@ public class TaskServiceImp implements TaskService {
         UserEntity user = userService.findUserByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("email or password are incorrect"));
 
+        if (newTaskRequestDTO.title() == null || newTaskRequestDTO.description() == null)
+            throw new InvalidTaskException("title and description must be provided");
         validateTitleAndDescription(newTaskRequestDTO.title(), newTaskRequestDTO.description());
         return taskRepository.save(
                 new Task(
@@ -128,6 +134,8 @@ public class TaskServiceImp implements TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(TaskNotFoundException::new);
 
+        if (putTaskRequestDTO.title() == null || putTaskRequestDTO.description() == null)
+            throw new InvalidTaskException("title and description must be provided");
         makeUpdatesPutTask(task, putTaskRequestDTO);
         return taskRepository.save(task);
     }
@@ -169,7 +177,7 @@ public class TaskServiceImp implements TaskService {
 
     private void makeUpdatesPutTask(Task task, PutTaskRequestDTO taskUpdate) throws InvalidTaskException {
         validateTitleAndDescription(taskUpdate.title(), taskUpdate.description());
-        task.setTitle(task.getTitle());
+        task.setTitle(taskUpdate.title());
         task.setDescription(taskUpdate.description());
         task.setTaskStatus(taskUpdate.taskStatus());
     }

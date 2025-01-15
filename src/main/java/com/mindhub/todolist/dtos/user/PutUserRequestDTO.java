@@ -1,6 +1,7 @@
 package com.mindhub.todolist.dtos.user;
 
 import com.mindhub.todolist.validations.NoWhitespaces;
+import com.mindhub.todolist.validations.ValidEmail;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
@@ -11,7 +12,7 @@ public record PutUserRequestDTO(
         String username,
         @NotBlank(message = "email must not be empty")
         @NoWhitespaces(message = "username can not contain whitespaces")
-        @Email(message = "invalid email")
+        @ValidEmail
         String email,
         @NotBlank(message = "password must not be empty")
         @NoWhitespaces(message = "username can not contain whitespaces")

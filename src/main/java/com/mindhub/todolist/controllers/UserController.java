@@ -8,23 +8,25 @@ import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
 import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
+import com.mindhub.todolist.services.UserService;
 import com.mindhub.todolist.services.implementations.UserServiceImp;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SecurityRequirement(name = "bearerAuth")
 @Controller
 @RequestMapping("/api/v1/users")
 public class UserController {
 
     @Autowired
-    private UserServiceImp userService;
+    private UserService userService;
 
     @GetMapping
     public ResponseEntity<List<UserDTO>> getAllUsers() {
@@ -42,8 +44,8 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserDTO> createUser(@Valid @RequestBody NewUserRequestDTO newUserRequestDTO) {
-        return userService.createUserRequest(newUserRequestDTO);
+    public ResponseEntity<UserDTO> createUser(Authentication authentication, @Valid @RequestBody NewUserRequestDTO newUserRequestDTO) {
+        return userService.createUserRequest(authentication, newUserRequestDTO);
     }
 
     @DeleteMapping("/{id}")
@@ -56,10 +58,9 @@ public class UserController {
         return userService.deleteUserRequest(authentication.getName());
     }
 
-
     @PutMapping("/{id}")
     public ResponseEntity<UserDTO> updatePutUser(@PathVariable Long id, @Valid @RequestBody PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
-        return userService.updatePutUserRequest(id, putUserRequestDTO);
+        return userService.updatePutUserByIdRequest(id, putUserRequestDTO);
     }
 
     @PutMapping("/self")
@@ -69,7 +70,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<UserDTO> updatePatchUser(@PathVariable Long id, @Valid @RequestBody PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
-        return userService.updatePatchUserRequest(id, patchUserRequestDTO);
+        return userService.updatePatchUserByIdRequest(id, patchUserRequestDTO);
     }
 
     @PatchMapping("/self")
