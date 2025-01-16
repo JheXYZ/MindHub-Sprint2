@@ -20,8 +20,8 @@ import java.util.List;
 @SpringBootApplication
 public class TodolistApplication {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    /*@Autowired
+    private PasswordEncoder passwordEncoder;*/
 
     private static final Logger log = LoggerFactory.getLogger(TodolistApplication.class);
 
@@ -30,7 +30,7 @@ public class TodolistApplication {
     }
 
     @Bean
-    public CommandLineRunner initData(UserRepository userRepository, TaskRepository taskRepository) {
+    public CommandLineRunner initData(UserRepository userRepository, TaskRepository taskRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             log.info("Populating Users...");
             userRepository.saveAll(

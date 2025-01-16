@@ -26,8 +26,8 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    /*@Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;*/
 
     @Bean
     public PasswordEncoder passwordEncoder(){
@@ -35,7 +35,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for REST APIs
                 .authorizeHttpRequests( authorizeRequest ->
