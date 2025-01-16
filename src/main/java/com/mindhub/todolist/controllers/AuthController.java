@@ -43,14 +43,15 @@ public class AuthController {
             description = "Get authenticated by submitting email and password. Returns JWT Token.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Login successful. A JWT token is returned."),
-                    @ApiResponse(responseCode =  "400", description = "The provided email or password are incorrect.")
+                    @ApiResponse(responseCode =  "400", description = "The provided email or password are invalid."),
+                    @ApiResponse(responseCode = "403", description = "Access denied.")
             },
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Email and password must be provided",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = LoginUserRequestDTO.class),
-                            examples = @ExampleObject(value = "{\"email\": \"email@email.com\", \"password\": \"password123\"}")
+                            examples = @ExampleObject(value = "{\"email\": \"username@email.com\", \"password\": \"password123\"}")
                     )
             )
     )
@@ -70,14 +71,15 @@ public class AuthController {
             description = "Create a new user or admin (if an admin is logged in)",
             responses = {
                     @ApiResponse(responseCode = "201", description = "Registration successful. A JWT token is returned."),
-                    @ApiResponse(responseCode =  "400", description = "Email or password are invalid.")
+                    @ApiResponse(responseCode =  "400", description = "Email or password are invalid. Invalid request."),
+                    @ApiResponse(responseCode = "403", description = "Access denied.")
             },
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Body of the registration application. Username, email, password and authority (if an admin is logged in, otherwise this will be ignored and set to a user).",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = LoginUserRequestDTO.class),
-                            examples = @ExampleObject(value = "{\"username\": \"username\",\"email\": \"user@email.com\", \"password\": \"password123\"}")
+                            examples = @ExampleObject(value = "{\"username\": \"username\",\"email\": \"username@email.com\", \"password\": \"password123\"}")
                     )
             )
     )

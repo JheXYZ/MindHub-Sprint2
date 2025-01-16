@@ -1,5 +1,6 @@
 package com.mindhub.todolist.dtos.user;
 
+import com.mindhub.todolist.models.UserAuthority;
 import com.mindhub.todolist.validations.NoWhitespaces;
 import com.mindhub.todolist.validations.ValidEmail;
 import jakarta.validation.constraints.Email;
@@ -17,6 +18,7 @@ public record PutUserRequestDTO(
         @NotBlank(message = "password must not be empty")
         @NoWhitespaces(message = "username can not contain whitespaces")
         @Length(min = 6, message = "password must have at least 6 characters")
-        String password
+        String password,
+        UserAuthority authority
 ) {
 }

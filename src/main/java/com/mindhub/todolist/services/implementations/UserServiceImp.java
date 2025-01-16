@@ -1,12 +1,10 @@
 package com.mindhub.todolist.services.implementations;
 
-import com.mindhub.todolist.dtos.user.NewUserRequestDTO;
-import com.mindhub.todolist.dtos.user.PatchUserRequestDTO;
-import com.mindhub.todolist.dtos.user.PutUserRequestDTO;
-import com.mindhub.todolist.dtos.user.UserDTO;
+import com.mindhub.todolist.dtos.user.*;
 import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
+import com.mindhub.todolist.models.UserAuthority;
 import com.mindhub.todolist.models.UserEntity;
 import com.mindhub.todolist.repositories.UserRepository;
 import com.mindhub.todolist.services.UserService;
@@ -35,8 +33,8 @@ public class UserServiceImp implements UserService {
     private PasswordEncoder passwordEncoder;
 
     @Override
-    public ResponseEntity<List<UserDTO>> getAllUsersRequest() {
-        return ResponseEntity.ok(getAllUsers().stream().map(UserDTO::new).toList());
+    public ResponseEntity<List<ExtendedUserDTO>> getAllUsersRequest() {
+        return ResponseEntity.ok(getAllUsers().stream().map(ExtendedUserDTO::new).toList());
     }
 
     @Override
@@ -45,8 +43,8 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    public ResponseEntity<UserDTO> getUserByIdRequest(Long id) throws UserNotFoundException {
-        return ResponseEntity.ok(new UserDTO(getUserById(id)));
+    public ResponseEntity<ExtendedUserDTO> getUserByIdRequest(Long id) throws UserNotFoundException {
+        return ResponseEntity.ok(new ExtendedUserDTO(getUserById(id)));
     }
 
     @Override
@@ -88,28 +86,28 @@ public class UserServiceImp implements UserService {
 
     @Override
     public ResponseEntity<?> deleteUserRequest(String email) throws UserNotFoundException {
-        deleteUser(getUserByEmail(email).getId());
+        deleteUser(getUserByEmail(email));
         return ResponseEntity.noContent().build();
     }
 
     @Override
-    public ResponseEntity<?> deleteUserRequest(Authentication authentication, Long id) throws UserNotFoundException {
-        deleteUser(id);
+    public ResponseEntity<?> deleteUserByIdRequest(Authentication authentication, Long id) throws UserNotFoundException {
+        deleteUser(getUserByEmail(authentication.getName()));
         log.info("Deleted user with id: {} by: {}", id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @Override
-    public void deleteUser(Long id) throws UserNotFoundException {
-        if (!userRepository.existsById(id))
-            throw new UserNotFoundException("user with id '" + id + "' was not found");
-        userRepository.deleteById(id);
+    public void deleteUser(UserEntity user) throws UserNotFoundException {
+        if (!userRepository.existsById(user.getId()))
+            throw new UserNotFoundException("user was not found");
+        userRepository.delete(user);
     }
 
 
     @Override
     public ResponseEntity<UserDTO> updatePutUserByIdRequest(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
-        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO)));
+        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO, true)));
     }
 
     @Override
@@ -118,21 +116,21 @@ public class UserServiceImp implements UserService {
                 .findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("user with email '" + email + "'was not found"))
                 .getId();
-        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO)));
+        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO, false)));
     }
 
     @Override
-    public UserEntity updatePutUser(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
+    public UserEntity updatePutUser(Long id, PutUserRequestDTO putUserRequestDTO, boolean isRequestFromAdmin) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("user with id '" + id + "' was not found"));
 
-        makeUpdatesPutUser(user, putUserRequestDTO);
+        makeUpdatesPutUser(user, putUserRequestDTO, isRequestFromAdmin);
         return userRepository.save(user);
     }
 
     @Override
-    public ResponseEntity<UserDTO> updatePatchUserByIdRequest(Long id, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
-        return ResponseEntity.ok(new UserDTO(updatePatchUser(id, patchUserRequestDTO)));
+    public ResponseEntity<ExtendedUserDTO> updatePatchUserByIdRequest(Long id, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
+        return ResponseEntity.ok(new ExtendedUserDTO(updatePatchUser(id, patchUserRequestDTO, true)));
     }
 
     @Override
@@ -141,36 +139,40 @@ public class UserServiceImp implements UserService {
                 .findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("user with email '" + email + "'was not found"))
                 .getId();
-        return ResponseEntity.ok(new UserDTO(updatePatchUser(id, patchUserRequestDTO)));
+        return ResponseEntity.ok(new UserDTO(updatePatchUser(id, patchUserRequestDTO, false)));
     }
 
     @Override
-    public UserEntity updatePatchUser(Long id, PatchUserRequestDTO patchUserRequestDTO) throws UserNotFoundException, InvalidUserException {
+    public UserEntity updatePatchUser(Long id, PatchUserRequestDTO patchUserRequestDTO, boolean isRequestFromAdmin) throws UserNotFoundException, InvalidUserException {
         UserEntity user = userRepository
                 .findById(id)
                 .orElseThrow(() -> new UserNotFoundException("user with id '" + id + "' was not found"));
-        makeUpdatesPatchUser(user, patchUserRequestDTO);
+        makeUpdatesPatchUser(user, patchUserRequestDTO, isRequestFromAdmin);
         return userRepository.save(user);
     }
 
 
-    private void makeUpdatesPutUser(UserEntity user, PutUserRequestDTO userUpdates) throws EmailAlreadyExistsException, InvalidUserException {
+    private void makeUpdatesPutUser(UserEntity user, PutUserRequestDTO userUpdates, boolean isRequestFromAdmin) throws EmailAlreadyExistsException, InvalidUserException {
         user.setUsername(userUpdates.username());
         if (!userUpdates.email().equals(user.getEmail()) && userRepository.existsByEmail(userUpdates.email()))
             throw new EmailAlreadyExistsException("email '" + userUpdates.email() + "' is already taken");
         user.setEmail(userUpdates.email());
+
         if (passwordEncoder.matches(userUpdates.password(), user.getPassword()))
             throw new InvalidUserException("password can not be the same as the old one");
         user.setPassword(passwordEncoder.encode(userUpdates.password()));
+
+        if (isRequestFromAdmin && userUpdates.authority() != null)
+            user.setAuthority(userUpdates.authority());
     }
 
-    private void makeUpdatesPatchUser(UserEntity user, PatchUserRequestDTO userUpdates) throws InvalidUserException {
+    private void makeUpdatesPatchUser(UserEntity user, PatchUserRequestDTO userUpdates, boolean isRequestFromAdmin) throws InvalidUserException {
         List<String> errors = new ArrayList<>();
 
         updateUsernameIfValid(user, userUpdates, errors);
         updateEmailIfValid(user, userUpdates, errors);
         updatePasswordIfValid(user, userUpdates, errors);
-        updateAuthorityIfValid(user, userUpdates, errors);
+        updateAuthorityIfValid(user, userUpdates, isRequestFromAdmin, errors);
 
         if (!errors.isEmpty())
             throw new InvalidUserException(errors.toString());
@@ -226,10 +228,9 @@ public class UserServiceImp implements UserService {
         errors.addAll(currentErrors);
     }
 
-    private void updateAuthorityIfValid(UserEntity user, PatchUserRequestDTO userUpdates, List<String> errors) {
-        if (userUpdates.authority() != null && !user.getAuthority().equals(userUpdates.authority())) {
+    private void updateAuthorityIfValid(UserEntity user, PatchUserRequestDTO userUpdates, boolean isRequestFromAdmin, List<String> errors) {
+        if (isRequestFromAdmin && userUpdates.authority() != null)
             user.setAuthority(userUpdates.authority());
-        }
     }
 
     public Optional<UserEntity> findUserByEmail(String email) {

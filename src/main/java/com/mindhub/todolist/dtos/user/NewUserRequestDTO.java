@@ -6,12 +6,14 @@ import com.mindhub.todolist.validations.UniqueEmail;
 import com.mindhub.todolist.validations.ValidEmail;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.Length;
 
 public record NewUserRequestDTO(
         @NotBlank(message = "username must not be empty")
         @NoWhitespaces(message = "username can not contain whitespaces")
         String username,
+        @NotNull(message = "email must be provided")
         @ValidEmail
         @UniqueEmail
         String email,

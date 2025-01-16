@@ -47,7 +47,7 @@ public class TodolistApplication {
                     List.of(
                             new Task("Title of this task", "Description for this task", TaskStatus.PENDING, userRepository.findById(1L).orElse(null)),
                             new Task("Do the dishes", "", TaskStatus.IN_PROGRESS, userRepository.findById(2L).orElse(null)),
-                            new Task("Do the laundry", "Do the landry with John's clothes", TaskStatus.PENDING, userRepository.findById(2L).orElse(null)),
+                            new Task("Do the laundry", "Do the laundry of John", TaskStatus.PENDING, userRepository.findById(2L).orElse(null)),
                             new Task("Do my bed", "", TaskStatus.COMPLETED, userRepository.findById(2L).orElse(null)),
                             new Task("Go to the gim", "At 17:30", TaskStatus.PENDING, userRepository.findById(3L).orElse(null)),
                             new Task("Send Armando the new documents", "Due to 8/1 until 10:00", TaskStatus.COMPLETED, userRepository.findById(3L).orElse(null)),

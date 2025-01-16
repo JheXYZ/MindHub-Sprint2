@@ -1,6 +1,5 @@
 package com.mindhub.todolist.config;
 
-import com.mindhub.todolist.exceptions.UserNotFoundException;
 import com.mindhub.todolist.models.UserEntity;
 import com.mindhub.todolist.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +19,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("user with email '" + email + "' was not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("user was not found"));
         return new User(email, userEntity.getPassword(), AuthorityUtils.createAuthorityList(userEntity.getAuthority().toString()));
     }
 

@@ -31,7 +31,7 @@ public class UserEntity {
     @NoWhitespaces(message = "username can not contain whitespaces")
     private String email;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<Task> tasks = new HashSet<>();
 
     UserAuthority authority = UserAuthority.USER;

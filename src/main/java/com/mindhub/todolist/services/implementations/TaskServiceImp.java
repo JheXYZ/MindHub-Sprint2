@@ -36,9 +36,8 @@ public class TaskServiceImp implements TaskService {
 
     @Override
     public ResponseEntity<List<TaskUserDTO>> getTasksRequest(String email) throws UserNotFoundException {
-        return ResponseEntity.ok(userService
-                .getUserByEmail(email)
-                .getTasks().stream()
+        return ResponseEntity.ok(taskRepository
+                .findByUser_email(email).stream()
                 .map(TaskUserDTO::new)
                 .toList());
     }
@@ -103,10 +102,7 @@ public class TaskServiceImp implements TaskService {
     }
 
     public ResponseEntity<?> deleteTaskFromUserRequest(String email, Long id) throws UserNotFoundException, TaskNotFoundException {
-        if (userService
-                .getUserByEmail(email)
-                .getTasks().stream()
-                .noneMatch(task -> task.getId().equals(id)))
+        if (!taskRepository.existsByIdAndUser_email(id, email))
             throw new TaskNotFoundException();
         deleteTask(id);
         return ResponseEntity.noContent().build();
@@ -124,7 +120,7 @@ public class TaskServiceImp implements TaskService {
     }
 
     public ResponseEntity<TaskUserDTO> updatePutTaskFromUserRequest(String email, Long id, PutTaskRequestDTO putTaskRequestDTO) throws TaskNotFoundException, InvalidTaskException {
-        if(userService.findUserByEmail(email).stream().noneMatch(task -> task.getId().equals(id)))
+        if(!taskRepository.existsByIdAndUser_email(id, email))
             throw new TaskNotFoundException();
         return ResponseEntity.ok(new TaskUserDTO(updatePutTask(id, putTaskRequestDTO)));
     }
@@ -145,10 +141,7 @@ public class TaskServiceImp implements TaskService {
     }
 
     public ResponseEntity<TaskUserDTO> updatePatchTaskFromUserRequest(String email, Long id, PatchTaskRequestDTO patchTaskRequestDTO) throws UserNotFoundException, TaskNotFoundException, InvalidTaskException {
-        if (userService
-                .getUserByEmail(email)
-                .getTasks().stream()
-                .noneMatch(task -> task.getId().equals(id)))
+        if(!taskRepository.existsByIdAndUser_email(id, email))
             throw new TaskNotFoundException();
 
         return ResponseEntity.ok(new TaskUserDTO(updatePatchTask(id, patchTaskRequestDTO)));

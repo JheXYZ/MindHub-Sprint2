@@ -7,6 +7,7 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,6 +24,11 @@ public class CustomExceptionsHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> userNotFoundExceptionHandler(UserNotFoundException userNotFoundException) {
         return finalResponse(userNotFoundException.getMessage(), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> usernameNotFoundExceptionHandler(UsernameNotFoundException usernameNotFoundException){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
 
     @ExceptionHandler(TaskNotFoundException.class)
@@ -92,7 +98,7 @@ public class CustomExceptionsHandler {
             // E.g. String '[invalid email, invalid password]' -> List<String> ["", "invalid email", "invalid password"]
             errorsList.addAll(Arrays.stream(errorMessage.split("\\[|]|,\\s*")).toList());
 
-            // this eliminates first index because it always is "", resulting in only the messages.
+            // this eliminates first index because it's always "", resulting in only the messages.
             // E.g. List<String> ["invalid email", "invalid password"]
             errorsList.remove(0);
         }
