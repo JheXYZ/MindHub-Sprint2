@@ -16,7 +16,7 @@ public class Task {
 
     private TaskStatus taskStatus;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private UserEntity user;
 
     public Task() {
@@ -84,7 +84,6 @@ public class Task {
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
                 ", taskStatus=" + taskStatus +
-                ", user=" + user +
                 '}';
     }
 

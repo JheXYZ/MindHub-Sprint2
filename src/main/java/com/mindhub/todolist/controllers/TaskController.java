@@ -3,7 +3,6 @@ package com.mindhub.todolist.controllers;
 import com.mindhub.todolist.dtos.task.*;
 import com.mindhub.todolist.exceptions.InvalidTaskException;
 import com.mindhub.todolist.exceptions.TaskNotFoundException;
-import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
 import com.mindhub.todolist.services.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -89,7 +88,7 @@ public class TaskController {
             }
     )
     @PostMapping("/user/{userId}")
-    public ResponseEntity<TaskDTO> createTaskByUserId(@PathVariable Long userId, @Valid @RequestBody NewTaskRequestDTO taskRequestDTO) throws UserNotFoundException, InvalidTaskException {
+    public ResponseEntity<TaskDTO> createTaskByUserId(Authentication authentication, @PathVariable Long userId, @Valid @RequestBody NewTaskRequestDTO taskRequestDTO) throws UserNotFoundException, InvalidTaskException {
         return taskService.createTaskByUserIdRequest(userId, taskRequestDTO);
     }
 
@@ -154,7 +153,7 @@ public class TaskController {
             summary = "Updates all attributes of a task from the user. (user or admin auth is required)",
             description = "Sets the task from the logged in user with the one provided. Returns the task updated.",
             responses = {
-                    @ApiResponse(responseCode = "204", description = "Task successfully updated."),
+                    @ApiResponse(responseCode = "200", description = "Task successfully updated."),
                     @ApiResponse(responseCode = "400", description = "Invalid task provided."),
                     @ApiResponse(responseCode = "403", description = "Access denied."),
                     @ApiResponse(responseCode = "404", description = "Task not found.")
@@ -169,7 +168,7 @@ public class TaskController {
             summary = "Updates provided attributes of a task. (admin auth is required)",
             description = "Updates task with the attributes provided. Returns the task updated.",
             responses = {
-                    @ApiResponse(responseCode = "204", description = "Task successfully updated."),
+                    @ApiResponse(responseCode = "200", description = "Task successfully updated."),
                     @ApiResponse(responseCode = "400", description = "Invalid task provided."),
                     @ApiResponse(responseCode = "403", description = "Access denied."),
                     @ApiResponse(responseCode = "404", description = "Task not found.")
@@ -184,7 +183,7 @@ public class TaskController {
             summary = "Updates provided attributes of a task from the user. (user or admin auth is required)",
             description = "Updates task from the logged in user with the attributes provided. Returns the task updated.",
             responses = {
-                    @ApiResponse(responseCode = "204", description = "Task successfully updated."),
+                    @ApiResponse(responseCode = "200", description = "Task successfully updated."),
                     @ApiResponse(responseCode = "400", description = "Invalid task provided."),
                     @ApiResponse(responseCode = "403", description = "Access denied."),
                     @ApiResponse(responseCode = "404", description = "Task not found.")

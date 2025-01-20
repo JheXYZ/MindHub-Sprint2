@@ -3,6 +3,7 @@ package com.mindhub.todolist.services;
 import com.mindhub.todolist.dtos.user.*;
 import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
+import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
 import com.mindhub.todolist.models.UserEntity;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public interface UserService {
 
     UserEntity getUserByEmail(String email) throws UserNotFoundException;
 
-    UserEntity createUser(Authentication authentication, NewUserRequestDTO newUserRequestDTO);
+    UserEntity createUser(String email, NewUserRequestDTO newUserRequestDTO) throws UnauthorizedException, UserNotFoundException;
 
     void deleteUser(UserEntity user) throws UserNotFoundException;
 
@@ -33,13 +34,13 @@ public interface UserService {
 
     ResponseEntity<UserDTO> getUserByEmailRequest(String email) throws UserNotFoundException;
 
-    ResponseEntity<UserDTO> createUserRequest(Authentication auth, NewUserRequestDTO newUserRequestDTO);
+    ResponseEntity<UserDTO> createUserRequest(Authentication auth, NewUserRequestDTO newUserRequestDTO) throws UnauthorizedException, UserNotFoundException;
 
     ResponseEntity<?> deleteUserRequest(String email) throws UserNotFoundException;
 
     ResponseEntity<?> deleteUserByIdRequest(Authentication authentication, Long id) throws UserNotFoundException;
 
-    ResponseEntity<UserDTO> updatePutUserByIdRequest(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException;
+    ResponseEntity<ExtendedUserDTO> updatePutUserByIdRequest(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException;
 
     ResponseEntity<UserDTO> updatePutUserRequest(String email, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException;
 

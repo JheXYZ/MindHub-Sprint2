@@ -3,8 +3,8 @@ package com.mindhub.todolist.controllers;
 import com.mindhub.todolist.config.JwtUtils;
 import com.mindhub.todolist.dtos.user.LoginUserRequestDTO;
 import com.mindhub.todolist.dtos.user.NewUserRequestDTO;
-import com.mindhub.todolist.exceptions.InvalidUserException;
-import com.mindhub.todolist.models.UserAuthority;
+import com.mindhub.todolist.exceptions.UnauthorizedException;
+import com.mindhub.todolist.exceptions.UserNotFoundException;
 import com.mindhub.todolist.models.UserEntity;
 import com.mindhub.todolist.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +21,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @SecurityRequirement(name = "bearerAuth")
 @RestController
@@ -84,8 +87,8 @@ public class AuthController {
             )
     )
     @PostMapping("/register")
-    public ResponseEntity<String> registerNewUser(Authentication authentication, @Valid @RequestBody NewUserRequestDTO registerRequest) {
-        UserEntity user = userService.createUser(authentication, registerRequest);
+    public ResponseEntity<String> registerNewUser(Authentication authentication, @Valid @RequestBody NewUserRequestDTO registerRequest) throws UnauthorizedException, UserNotFoundException {
+        UserEntity user = userService.createUser(authentication != null ? authentication.getName() : null, registerRequest);
         return authenticateUser(new LoginUserRequestDTO(user.getEmail(), registerRequest.password()), true);
     }
 

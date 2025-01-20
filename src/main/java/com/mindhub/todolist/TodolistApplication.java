@@ -1,21 +1,9 @@
 package com.mindhub.todolist;
 
-import com.mindhub.todolist.models.Task;
-import com.mindhub.todolist.models.TaskStatus;
-import com.mindhub.todolist.models.UserAuthority;
-import com.mindhub.todolist.models.UserEntity;
-import com.mindhub.todolist.repositories.TaskRepository;
-import com.mindhub.todolist.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.List;
 
 @SpringBootApplication
 public class TodolistApplication {
@@ -29,7 +17,7 @@ public class TodolistApplication {
         SpringApplication.run(TodolistApplication.class, args);
     }
 
-    @Bean
+    /*@Bean
     public CommandLineRunner initData(UserRepository userRepository, TaskRepository taskRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             log.info("Populating Users...");
@@ -38,6 +26,7 @@ public class TodolistApplication {
                             new UserEntity("armando@email.com", passwordEncoder.encode("password123"), "ArmandoParedes", UserAuthority.USER),
                             new UserEntity("amelia@email.com", passwordEncoder.encode("longerPassword544"), "amelia_1990", UserAuthority.USER),
                             new UserEntity("josecardamomo@email.com", passwordEncoder.encode("joseKpo777"), "JoseCapo777", UserAuthority.USER),
+                            new UserEntity("emptyuser@email.com", passwordEncoder.encode("password123"), "EmptyUser", UserAuthority.USER),
                             new UserEntity("jhex@email.com", passwordEncoder.encode("admin123"), "JheX", UserAuthority.ADMIN)
                     )
             );
@@ -55,7 +44,7 @@ public class TodolistApplication {
                     )
             );
             log.info("Successfully populated Tasks!");
-            /*printResults(userRepository, taskRepository);*/
+            printResults(userRepository, taskRepository);
         };
     }
 
@@ -73,5 +62,5 @@ public class TodolistApplication {
         System.out.println("----");
         printAllTasks(taskRepository);
         System.out.println("----");
-    }
+    }*/
 }

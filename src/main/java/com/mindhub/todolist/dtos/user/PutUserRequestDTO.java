@@ -3,7 +3,6 @@ package com.mindhub.todolist.dtos.user;
 import com.mindhub.todolist.models.UserAuthority;
 import com.mindhub.todolist.validations.NoWhitespaces;
 import com.mindhub.todolist.validations.ValidEmail;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
 

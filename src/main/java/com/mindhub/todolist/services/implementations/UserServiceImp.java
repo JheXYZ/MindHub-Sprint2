@@ -3,6 +3,7 @@ package com.mindhub.todolist.services.implementations;
 import com.mindhub.todolist.dtos.user.*;
 import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
+import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
 import com.mindhub.todolist.models.UserAuthority;
 import com.mindhub.todolist.models.UserEntity;
@@ -34,7 +35,10 @@ public class UserServiceImp implements UserService {
 
     @Override
     public ResponseEntity<List<ExtendedUserDTO>> getAllUsersRequest() {
-        return ResponseEntity.ok(getAllUsers().stream().map(ExtendedUserDTO::new).toList());
+        return ResponseEntity.ok(getAllUsers()
+                .stream()
+                .map(ExtendedUserDTO::new)
+                .toList());
     }
 
     @Override
@@ -66,22 +70,23 @@ public class UserServiceImp implements UserService {
     }
 
     @Override
-    public UserEntity createUser(Authentication authentication, NewUserRequestDTO newUserRequestDTO) {
+    public UserEntity createUser(String email, NewUserRequestDTO newUserRequestDTO) throws UnauthorizedException, UserNotFoundException {
         UserEntity user = new UserEntity(newUserRequestDTO);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if (authentication != null && authentication
-                .getAuthorities()
-                .stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ADMIN"))
-        )
-            user.setAuthority(newUserRequestDTO.authority());
+        if (email != null && newUserRequestDTO.authority() != null && newUserRequestDTO.authority().equals(UserAuthority.ADMIN)) {
+            // checks if user has ADMIN authority
+            if (userRepository.existsByEmailAndAuthority(email, UserAuthority.ADMIN))
+                user.setAuthority(newUserRequestDTO.authority());
+            else
+                throw new UnauthorizedException("unauthorized admin creation");
+        }
 
         return userRepository.save(user);
     }
 
     @Override
-    public ResponseEntity<UserDTO> createUserRequest(Authentication auth, NewUserRequestDTO newUserRequestDTO) {
-        return new ResponseEntity<>(new UserDTO(createUser(auth,newUserRequestDTO)), HttpStatus.CREATED);
+    public ResponseEntity<UserDTO> createUserRequest(Authentication auth, NewUserRequestDTO newUserRequestDTO) throws UnauthorizedException, UserNotFoundException {
+        return new ResponseEntity<>(new UserDTO(createUser(auth.getName(),newUserRequestDTO)), HttpStatus.CREATED);
     }
 
     @Override
@@ -92,7 +97,7 @@ public class UserServiceImp implements UserService {
 
     @Override
     public ResponseEntity<?> deleteUserByIdRequest(Authentication authentication, Long id) throws UserNotFoundException {
-        deleteUser(getUserByEmail(authentication.getName()));
+        deleteUser(getUserById(id));
         log.info("Deleted user with id: {} by: {}", id, authentication.getName());
         return ResponseEntity.noContent().build();
     }
@@ -106,8 +111,8 @@ public class UserServiceImp implements UserService {
 
 
     @Override
-    public ResponseEntity<UserDTO> updatePutUserByIdRequest(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
-        return ResponseEntity.ok(new UserDTO(updatePutUser(id, putUserRequestDTO, true)));
+    public ResponseEntity<ExtendedUserDTO> updatePutUserByIdRequest(Long id, PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
+        return ResponseEntity.ok(new ExtendedUserDTO(updatePutUser(id, putUserRequestDTO, true)));
     }
 
     @Override

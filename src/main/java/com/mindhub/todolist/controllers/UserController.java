@@ -1,6 +1,9 @@
 package com.mindhub.todolist.controllers;
 
-import com.mindhub.todolist.dtos.user.*;
+import com.mindhub.todolist.dtos.user.ExtendedUserDTO;
+import com.mindhub.todolist.dtos.user.PatchUserRequestDTO;
+import com.mindhub.todolist.dtos.user.PutUserRequestDTO;
+import com.mindhub.todolist.dtos.user.UserDTO;
 import com.mindhub.todolist.exceptions.EmailAlreadyExistsException;
 import com.mindhub.todolist.exceptions.InvalidUserException;
 import com.mindhub.todolist.exceptions.UnauthorizedException;
@@ -101,7 +104,7 @@ public class UserController {
             }
     )
     @PutMapping("/{id}")
-    public ResponseEntity<UserDTO> updatePutUser(@PathVariable Long id, @Valid @RequestBody PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
+    public ResponseEntity<ExtendedUserDTO> updatePutUser(@PathVariable Long id, @Valid @RequestBody PutUserRequestDTO putUserRequestDTO) throws UserNotFoundException, EmailAlreadyExistsException, InvalidUserException {
         return userService.updatePutUserByIdRequest(id, putUserRequestDTO);
     }
 

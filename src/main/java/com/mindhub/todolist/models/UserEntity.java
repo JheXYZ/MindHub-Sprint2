@@ -31,12 +31,20 @@ public class UserEntity {
     @NoWhitespaces(message = "username can not contain whitespaces")
     private String email;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Task> tasks = new HashSet<>();
 
-    UserAuthority authority = UserAuthority.USER;
+    private UserAuthority authority = UserAuthority.USER;
 
     public UserEntity() {
+    }
+
+    public UserEntity(long id, String email, String password, String username, UserAuthority authority) {
+        this.id = id;
+        this.email = email;
+        this.password = password;
+        this.username = username;
+        this.authority = authority;
     }
 
     public UserEntity(String email, String password, String username, UserAuthority authority) {
@@ -45,6 +53,7 @@ public class UserEntity {
         this.username = username;
         this.authority = authority;
     }
+
 
     public UserEntity(NewUserRequestDTO newUserRequestDTO) {
         this.email = newUserRequestDTO.email();

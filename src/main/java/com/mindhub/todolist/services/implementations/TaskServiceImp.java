@@ -3,7 +3,6 @@ package com.mindhub.todolist.services.implementations;
 import com.mindhub.todolist.dtos.task.*;
 import com.mindhub.todolist.exceptions.InvalidTaskException;
 import com.mindhub.todolist.exceptions.TaskNotFoundException;
-import com.mindhub.todolist.exceptions.UnauthorizedException;
 import com.mindhub.todolist.exceptions.UserNotFoundException;
 import com.mindhub.todolist.models.Task;
 import com.mindhub.todolist.models.TaskStatus;
@@ -23,12 +22,14 @@ public class TaskServiceImp implements TaskService {
 
     @Autowired
     private TaskRepository taskRepository;
+
     @Autowired
     private UserService userService;
 
     @Override
     public ResponseEntity<List<TaskDTO>> getAllTasksRequest() {
-        return ResponseEntity.ok(getAllTasks()
+        List<Task> tasks = getAllTasks();
+        return ResponseEntity.ok(tasks
                         .stream()
                         .map(TaskDTO::new)
                         .toList());
@@ -83,7 +84,7 @@ public class TaskServiceImp implements TaskService {
     @Override
     public Task createTask(String email, NewTaskRequestDTO newTaskRequestDTO) throws UserNotFoundException, InvalidTaskException {
         UserEntity user = userService.findUserByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("email or password are incorrect"));
+                .orElseThrow(() -> new UserNotFoundException("invalid user"));
 
         if (newTaskRequestDTO.title() == null || newTaskRequestDTO.description() == null)
             throw new InvalidTaskException("title and description must be provided");

@@ -3,6 +3,8 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+src/test/resources/application-test.yml
+.run
 
 ### STS ###
 .apt_generated
@@ -31,5 +33,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-src/test/resources/application-test.yml

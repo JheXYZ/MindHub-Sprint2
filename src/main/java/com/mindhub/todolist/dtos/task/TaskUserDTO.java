@@ -5,10 +5,10 @@ import com.mindhub.todolist.models.TaskStatus;
 
 public class TaskUserDTO {
 
-    private final Long id;
-    private final String title;
-    private final String description;
-    private final TaskStatus taskStatus;
+    private Long id;
+    private String title;
+    private String description;
+    private TaskStatus taskStatus;
 
     public TaskUserDTO(Long id, String title, String description, TaskStatus taskStatus) {
         this.id = id;
@@ -22,6 +22,9 @@ public class TaskUserDTO {
         this.title = task.getTitle();
         this.description = task.getDescription();
         this.taskStatus = task.getTaskStatus();
+    }
+
+    public TaskUserDTO() {
     }
 
     public Long getId() {
