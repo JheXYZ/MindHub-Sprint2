@@ -40,13 +40,8 @@ public class SecurityConfig {
                         authorizeRequest
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html" ,"/h2-console/**").permitAll()
                                 .requestMatchers( "/api/v1/auth/**", "/index.html").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/tasks/user/*").hasAnyAuthority("USER", "ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/v1/tasks/user").hasAnyAuthority("USER", "ADMIN")
-                                .requestMatchers(HttpMethod.PUT, "/api/v1/tasks/user/*").hasAnyAuthority("USER", "ADMIN")
-                                .requestMatchers(HttpMethod.PATCH, "/api/v1/tasks/user/*").hasAnyAuthority("USER", "ADMIN")
-                                .requestMatchers(HttpMethod.DELETE, "/api/v1/tasks/user/*").hasAnyAuthority("USER", "ADMIN")
-                                .requestMatchers(HttpMethod.POST, "/api/v1/tasks/user").hasAnyAuthority("USER", "ADMIN")
                                 .requestMatchers(HttpMethod.POST, "/api/v1/tasks/user/*").hasAnyAuthority("ADMIN")
+                                .requestMatchers("/api/v1/tasks/user/**", "/api/v1/users/self").hasAnyAuthority("USER", "ADMIN")
                                 .requestMatchers("/api/v1/admin/**", "/api/v1/users/**", "/api/v1/tasks/**").hasAuthority("ADMIN")// Allow public access to specific endpoints
                                 .anyRequest().denyAll() // All other requests must be authenticated
                 )
